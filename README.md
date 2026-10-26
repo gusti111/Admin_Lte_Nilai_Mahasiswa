@@ -1,61 +1,60 @@
 # UTS — AdminLTE Nilai Mahasiswa
 
-Aplikasi CRUD nilai mahasiswa berbasis PHP Native, MySQLi, dan template AdminLTE 4.10.0. Struktur template asli dipertahankan; halaman Users dikonversi menjadi `users.php` supaya PHP diproses Apache/XAMPP.
+Proyek tugas UTS pengolahan nilai mahasiswa menggunakan **PHP Native, MySQLi, MySQL/MariaDB, dan template AdminLTE 4.10.0**. Tampilan dasarnya tetap memakai template AdminLTE; halaman Users disesuaikan untuk menampilkan dan mengelola data nilai mahasiswa.
 
-## Fitur sesuai catatan UTS
+## Fitur
 
-1. **Pembacaan foto:** thumbnail berada di kolom Nama Mahasiswa. Upload menerima JPG/JPEG, PNG, WEBP maksimal 2 MiB. Nama file tersimpan pada kolom `foto`; file upload berada di `uploads/foto-mahasiswa/`. Foto demo menggunakan avatar bawaan AdminLTE.
-2. **Searching:** teks mencari nama mahasiswa; dropdown menyaring predikat. Keduanya bisa digunakan bersamaan.
-3. **Sorting:** klik judul kolom **Nilai Akhir** dan ikon panah untuk mengubah urutan dari terbesar ke terkecil atau sebaliknya.
-4. **Pagination:** pilihan 5, 10, atau 15 record per halaman; tombol Pertama, Sebelumnya, nomor halaman, Berikutnya, Terakhir.
-5. **CRUD:** tambah, baca, edit, hapus dengan modal konfirmasi, validasi server-side, prepared statement, token CSRF, dan pesan hasil operasi.
-6. **Tanggal:** `created_date` dan `modified_date` ditampilkan; update menulis waktu perubahan.
-7. **Dummy data:** `database_export.sql` berisi struktur dan 30 record dummy yang cukup untuk menguji predikat, foto, sorting, filter, dan beberapa halaman.
+- Menampilkan data mahasiswa dari tabel `nilaimhsw`.
+- Menampilkan foto/thumbnail di samping nama mahasiswa.
+- Mencari mahasiswa berdasarkan nama dan memfilter berdasarkan predikat.
+- Mengurutkan data berdasarkan nilai akhir.
+- Mengatur pagination 5, 10, atau 15 data per halaman.
+- Menambah, mengubah, dan menghapus data mahasiswa.
+- Menampilkan tanggal data dibuat dan terakhir diperbarui.
+
+## Teknologi
+
+- PHP Native dan MySQLi
+- MySQL/MariaDB melalui XAMPP
+- AdminLTE 4.10.0
 
 ## Database
 
-- Database: `db5a`
-- Tabel: `nilaimhsw`
-- Kolom: `nim`, `namamhsw`, `nilaiakhir`, `nilaihuruf`, `predikat`, `foto`, `created_date`, `modified_date`
-- Koneksi: `connect.php` (konfigurasi lokal XAMPP: user `root`, password kosong).
-- `database_schema.sql`: skema instalasi baru.
-- `database_dummy_data.sql`: 30 record dummy.
-- `database_export.sql`: skema + data dummy untuk dikumpulkan pada repo.
-- `database_migration_existing.sql`: petunjuk migrasi selektif untuk tabel lama.
+Nama database yang digunakan aplikasi: `db5a`.
 
-## Instalasi XAMPP
+Tabel utama: `nilaimhsw`, dengan kolom yang digunakan aplikasi seperti `nim`, `namamhsw`, `nilaiakhir`, `nilaihuruf`, `predikat`, `foto`, `created_date`, dan `modified_date`.
 
-1. Ekstrak proyek ke `C:\xampp\htdocs\admin-lte-v4.10.0`.
-2. Jalankan Apache dan MySQL.
-3. Instalasi baru: impor `database_export.sql` lewat phpMyAdmin.
-4. Database lama: backup dulu, cek `SHOW COLUMNS` dan `SHOW INDEX`, kemudian jalankan hanya perintah yang dibutuhkan dari `database_migration_existing.sql`. Jangan jalankan ALTER yang sama dua kali.
-5. Untuk menambah data demonstrasi pada tabel yang sudah siap, import `database_dummy_data.sql`. Query memakai `INSERT IGNORE` agar NIM yang sama tidak ditimpa.
-6. Pastikan PHP/Apache bisa menulis ke folder `uploads/foto-mahasiswa`.
-7. Buka `http://localhost/admin-lte-v4.10.0/users.php`.
+### File SQL
 
-## Foto dan keamanan
+- **`nilaimhsw.sql`** — ekspor database dari phpMyAdmin yang digunakan sebagai dump utama proyek. Simpan file ini sebagai salinan ekspor asli.
+- `database_schema.sql` — alternatif untuk membuat struktur tabel pada instalasi baru.
+- `database_dummy_data.sql` — data contoh untuk menguji fitur; bukan pengganti data asli.
+- `database_export.sql` — paket skema dan data contoh untuk pengujian terpisah.
+- `database_migration_existing.sql` — panduan perubahan struktur untuk database lama jika memang diperlukan.
 
-- Foto bersifat opsional agar data lama tetap bisa ditampilkan.
-- Nama file upload dibuat oleh server; nama asli pengguna tidak digunakan sebagai path.
-- Foto lama dipertahankan saat edit tanpa foto baru. Foto upload lama dicoba dihapus saat diganti atau record dihapus.
-- Alias `demo-user1.jpg`–`demo-user8.jpg` dipetakan ke avatar template di `assets/img`.
-- Jangan commit foto mahasiswa asli ke repositori publik.
-- NIM harus unik. Sebelum menambahkan UNIQUE pada database lama, periksa duplikasi.
-- Password root kosong hanya untuk lingkungan XAMPP lokal, bukan server publik.
+File SQL tambahan disediakan sebagai bantuan untuk instalasi/pengujian. **Tidak perlu mengimpor semuanya.** Jika ingin mempertahankan database yang sudah ada, buat backup terlebih dahulu dan periksa struktur tabel sebelum menjalankan SQL tambahan. Hindari menjalankan perintah perubahan struktur yang sama lebih dari sekali.
 
-## Aturan konversi nilai
+## Menjalankan di XAMPP
 
-Sesuai fungsi konversi di kode: E ≤ 34,50 (Tidak Lulus); D ≤ 50,50 (Kurang Memuaskan); C ≤ 65,50 (Cukup Memuaskan); B ≤ 80,50 (Memuaskan); A > 80,50 hingga 100 (Sangat Memuaskan). Input menerima maksimal dua angka desimal.
+1. Letakkan folder proyek di dalam `C:\xampp\htdocs\`.
+2. Jalankan Apache dan MySQL dari XAMPP Control Panel.
+3. Buat atau pilih database `db5a` melalui phpMyAdmin.
+4. Untuk memulihkan database dari ekspor utama, impor `nilaimhsw.sql`. Jika menggunakan database yang sudah berjalan, jangan mengimpor ulang sebelum memastikan dampaknya terhadap data saat ini.
+5. Periksa pengaturan koneksi pada `connect.php`. Konfigurasi bawaan untuk XAMPP lokal menggunakan host `localhost`, user `root`, password kosong, dan database `db5a`.
+6. Buka halaman aplikasi melalui:
+
+   `http://localhost/admin-lte-v4.10.0/users.php`
+
+   Sesuaikan alamat URL jika nama folder proyek berbeda.
+
+## Foto mahasiswa
+
+Foto bersifat opsional. Aplikasi menggunakan kolom `foto` untuk menyimpan nama file foto dan direktori `uploads/foto-mahasiswa/` untuk file yang diunggah. Untuk repositori publik, gunakan foto contoh dan jangan mengunggah foto mahasiswa asli tanpa izin.
 
 ## Pengujian
 
-- Jalankan `php -l` pada file PHP.
-- Jalankan `php tests/test_nilai_predikat_huruf.php` dan `php tests/test_nilai_helpers.php`.
-- Uji tambah tanpa/dengan foto, file non-gambar dan di atas batas ukuran, edit tanpa mengganti foto, edit dengan foto baru, hapus, cari nama, filter predikat, klik panah sorting, serta pagination 5/10/15.
-- Operasi MySQL perlu diuji langsung di XAMPP lokal.
+Jalankan aplikasi di XAMPP dan periksa pencarian nama, filter predikat, pengurutan nilai akhir, pagination, tambah/edit/hapus data, serta tampilan foto. Pastikan pengujian dilakukan pada salinan database atau data contoh agar data penting tidak berubah.
 
-## GitHub
+## Repositori
 
-Repositori: https://github.com/gusti111/Admin_Lte_Nilai_Mahasiswa
-
-Pastikan Visibility repositori **Public** sesuai instruksi UTS. Jangan commit kredensial, password produksi, atau foto mahasiswa asli.
+https://github.com/gusti111/Admin_Lte_Nilai_Mahasiswa
