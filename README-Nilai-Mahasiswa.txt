@@ -1,30 +1,61 @@
-INTEGRASI TEMPLATE ADMINLTE 4.10.0 — NILAI MAHASISWA
+# UTS — AdminLTE Nilai Mahasiswa
 
-Perubahan dibuat langsung dari halaman users.html bawaan template. Halaman tersebut diganti namanya menjadi users.php (bukan membuat dashboard lain), karena server PHP/XAMPP secara standar memproses kode PHP pada file berekstensi .php.
+Aplikasi CRUD nilai mahasiswa berbasis PHP Native, MySQLi, dan template AdminLTE 4.10.0. Struktur template asli dipertahankan; halaman Users dikonversi menjadi `users.php` supaya PHP diproses Apache/XAMPP.
 
-Yang dipertahankan:
-- Struktur halaman, sidebar, navbar, card, modal, Bootstrap/AdminLTE, CSS, JavaScript, gambar, dan aset asli template.
-- Direktori aset asli AdminLTE tetap lengkap.
+## Fitur sesuai catatan UTS
 
-Integrasi database:
-- connect.php: memakai konfigurasi dari proyek phph_db, database db5a, user root, password kosong.
-- Tabel: nilaimhsw.
-- Kolom utama: nim, namamhsw, nilaiakhir, nilaihuruf, predikat. Kolom created_date dan modified_date ditampilkan/diperbarui jika tersedia pada tabel.
-- nilai_predikat_huruf.php: menggunakan fungsi predikat() dengan label dan kategori dari tugas yang kamu kirim.
-- insert_nilai.php: POST tambah data, validasi NIM/nama/nilai, hitung nilai huruf/predikat, prepared statement.
-- edit_nilai.php: POST edit data; form modal mengambil value NIM, nama, dan nilai dari tombol Edit.
-- delete_nilai.php: POST hapus data; tombol memiliki atribut data-nim yang disalin ke input tersembunyi pada modal konfirmasi.
-- _nilai_helpers.php: validasi dan fungsi redirect yang dipakai handler.
+1. **Pembacaan foto:** thumbnail berada di kolom Nama Mahasiswa. Upload menerima JPG/JPEG, PNG, WEBP maksimal 2 MiB. Nama file tersimpan pada kolom `foto`; file upload berada di `uploads/foto-mahasiswa/`. Foto demo menggunakan avatar bawaan AdminLTE.
+2. **Searching:** teks mencari nama mahasiswa; dropdown menyaring predikat. Keduanya bisa digunakan bersamaan.
+3. **Sorting:** klik judul kolom **Nilai Akhir** dan ikon panah untuk mengubah urutan dari terbesar ke terkecil atau sebaliknya.
+4. **Pagination:** pilihan 5, 10, atau 15 record per halaman; tombol Pertama, Sebelumnya, nomor halaman, Berikutnya, Terakhir.
+5. **CRUD:** tambah, baca, edit, hapus dengan modal konfirmasi, validasi server-side, prepared statement, token CSRF, dan pesan hasil operasi.
+6. **Tanggal:** `created_date` dan `modified_date` ditampilkan; update menulis waktu perubahan.
+7. **Dummy data:** `database_export.sql` berisi struktur dan 30 record dummy yang cukup untuk menguji predikat, foto, sorting, filter, dan beberapa halaman.
 
-Cara menjalankan:
-1. Ekstrak ZIP ini ke C:\xampp\htdocs\.
-2. Aktifkan Apache dan MySQL dari XAMPP.
-3. Pastikan database db5a dan tabel nilaimhsw dari proyek phph_db tersedia di phpMyAdmin.
-4. Buka http://localhost/admin-lte-v4.10.0/users.php
-5. Jika nama database, user, atau password berbeda, sesuaikan connect.php.
+## Database
 
-Catatan:
-- `users.html` asli diganti menjadi `users.php`; halaman AdminLTE yang sama dipakai, bukan page baru yang didesain dari awal.
-- Data email dari contoh template tidak ditampilkan karena tabel nilaimhsw di proyekmu tidak memiliki kolom email. Kolom terkait diubah menjadi Nilai Akhir, Nilai Huruf, Predikat, dan Tgl Dibuat.
-- `created_date` diasumsikan tersedia karena dibaca oleh bacanilai.php milik proyekmu. Kolom `modified_date` dipakai pada update sesuai file baca yang kamu kirim.
-- Sintaks PHP dapat diperiksa lokal, tetapi koneksi MySQL hanya dapat dipastikan setelah dijalankan pada XAMPP dengan database db5a milikmu.
+- Database: `db5a`
+- Tabel: `nilaimhsw`
+- Kolom: `nim`, `namamhsw`, `nilaiakhir`, `nilaihuruf`, `predikat`, `foto`, `created_date`, `modified_date`
+- Koneksi: `connect.php` (konfigurasi lokal XAMPP: user `root`, password kosong).
+- `database_schema.sql`: skema instalasi baru.
+- `database_dummy_data.sql`: 30 record dummy.
+- `database_export.sql`: skema + data dummy untuk dikumpulkan pada repo.
+- `database_migration_existing.sql`: petunjuk migrasi selektif untuk tabel lama.
+
+## Instalasi XAMPP
+
+1. Ekstrak proyek ke `C:\xampp\htdocs\admin-lte-v4.10.0`.
+2. Jalankan Apache dan MySQL.
+3. Instalasi baru: impor `database_export.sql` lewat phpMyAdmin.
+4. Database lama: backup dulu, cek `SHOW COLUMNS` dan `SHOW INDEX`, kemudian jalankan hanya perintah yang dibutuhkan dari `database_migration_existing.sql`. Jangan jalankan ALTER yang sama dua kali.
+5. Untuk menambah data demonstrasi pada tabel yang sudah siap, import `database_dummy_data.sql`. Query memakai `INSERT IGNORE` agar NIM yang sama tidak ditimpa.
+6. Pastikan PHP/Apache bisa menulis ke folder `uploads/foto-mahasiswa`.
+7. Buka `http://localhost/admin-lte-v4.10.0/users.php`.
+
+## Foto dan keamanan
+
+- Foto bersifat opsional agar data lama tetap bisa ditampilkan.
+- Nama file upload dibuat oleh server; nama asli pengguna tidak digunakan sebagai path.
+- Foto lama dipertahankan saat edit tanpa foto baru. Foto upload lama dicoba dihapus saat diganti atau record dihapus.
+- Alias `demo-user1.jpg`–`demo-user8.jpg` dipetakan ke avatar template di `assets/img`.
+- Jangan commit foto mahasiswa asli ke repositori publik.
+- NIM harus unik. Sebelum menambahkan UNIQUE pada database lama, periksa duplikasi.
+- Password root kosong hanya untuk lingkungan XAMPP lokal, bukan server publik.
+
+## Aturan konversi nilai
+
+Sesuai fungsi konversi di kode: E ≤ 34,50 (Tidak Lulus); D ≤ 50,50 (Kurang Memuaskan); C ≤ 65,50 (Cukup Memuaskan); B ≤ 80,50 (Memuaskan); A > 80,50 hingga 100 (Sangat Memuaskan). Input menerima maksimal dua angka desimal.
+
+## Pengujian
+
+- Jalankan `php -l` pada file PHP.
+- Jalankan `php tests/test_nilai_predikat_huruf.php` dan `php tests/test_nilai_helpers.php`.
+- Uji tambah tanpa/dengan foto, file non-gambar dan di atas batas ukuran, edit tanpa mengganti foto, edit dengan foto baru, hapus, cari nama, filter predikat, klik panah sorting, serta pagination 5/10/15.
+- Operasi MySQL perlu diuji langsung di XAMPP lokal.
+
+## GitHub
+
+Repositori: https://github.com/gusti111/Admin_Lte_Nilai_Mahasiswa
+
+Pastikan Visibility repositori **Public** sesuai instruksi UTS. Jangan commit kredensial, password produksi, atau foto mahasiswa asli.
