@@ -1,0 +1,5 @@
+# Nonaktifkan directory listing dan eksekusi skrip di folder foto unggahan.
+Options -Indexes
+<FilesMatch "\\.(php|php[0-9]?|phtml|phar|cgi|pl|asp|aspx|jsp|sh)$">
+    Require all denied
+</FilesMatch>
