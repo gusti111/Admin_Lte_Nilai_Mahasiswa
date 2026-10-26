@@ -1,59 +1,72 @@
--- EXPORT SQL DEMO PROYEK UTS ADMINLTE NILAI MAHASISWA
--- Berisi struktur dan 30 data dummy, tanpa data pribadi dari database lokal.
--- Skema database proyek UTS AdminLTE Nilai Mahasiswa.
--- Untuk instalasi baru. Jika db5a.nilaimhsw sudah ada, gunakan migrasi yang disediakan.
-CREATE DATABASE IF NOT EXISTS `db5a` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE `db5a`;
+-- phpMyAdmin SQL Dump
+-- version 5.2.1
+-- https://www.phpmyadmin.net/
+--
+-- Host: 127.0.0.1
+-- Waktu pembuatan: 26 Okt 2026 pada 02.12
+-- Versi server: 10.4.32-MariaDB
+-- Versi PHP: 8.0.30
 
-CREATE TABLE IF NOT EXISTS `nilaimhsw` (
-  `nim` VARCHAR(30) NOT NULL,
-  `namamhsw` VARCHAR(150) NOT NULL,
-  `nilaiakhir` DECIMAL(5,2) NOT NULL,
-  `nilaihuruf` CHAR(1) NOT NULL,
-  `predikat` VARCHAR(50) NOT NULL,
-  `foto` VARCHAR(255) DEFAULT NULL,
-  `created_date` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `modified_date` DATETIME DEFAULT NULL,
-  PRIMARY KEY (`nim`),
-  KEY `idx_nilaimhsw_nilaiakhir` (`nilaiakhir`),
-  KEY `idx_nilaimhsw_predikat` (`predikat`),
-  KEY `idx_nilaimhsw_namamhsw` (`namamhsw`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+START TRANSACTION;
+SET time_zone = "+00:00";
 
--- 30 data dummy untuk demonstrasi pencarian, filter predikat, sorting, dan pagination.
--- Foto demo memakai avatar bawaan AdminLTE yang dipetakan oleh users.php/_nilai_helpers.php.
--- INSERT IGNORE menjaga record yang memakai NIM sama tidak ditimpa.
-USE `db5a`;
-INSERT IGNORE INTO `nilaimhsw`
-  (`nim`, `namamhsw`, `nilaiakhir`, `nilaihuruf`, `predikat`, `foto`, `created_date`, `modified_date`)
-VALUES
-  ('202600001', 'Aditya Pratama', 95.00, 'A', 'Sangat Memuaskan', 'demo-user1.jpg', '2026-10-02 09:07:00', '2026-10-03 10:11:00'),
-  ('202600002', 'Aisyah Putri', 88.50, 'A', 'Sangat Memuaskan', 'demo-user2.jpg', '2026-10-03 10:14:00', '2026-10-04 11:22:00'),
-  ('202600003', 'Andi Saputra', 82.00, 'A', 'Sangat Memuaskan', 'demo-user3.jpg', '2026-10-04 11:21:00', '2026-10-05 12:33:00'),
-  ('202600004', 'Anisa Rahmawati', 80.50, 'B', 'Memuaskan', 'demo-user4.jpg', '2026-10-05 12:28:00', NULL),
-  ('202600005', 'Arif Hidayat', 79.75, 'B', 'Memuaskan', 'demo-user5.jpg', '2026-10-06 13:35:00', '2026-10-07 14:55:00'),
-  ('202600006', 'Bunga Lestari', 75.25, 'B', 'Memuaskan', 'demo-user6.jpg', '2026-10-07 14:42:00', '2026-10-08 15:06:00'),
-  ('202600007', 'Dinda Maharani', 70.00, 'B', 'Memuaskan', 'demo-user7.jpg', '2026-10-08 15:49:00', '2026-10-09 16:17:00'),
-  ('202600008', 'Dimas Setiawan', 66.00, 'B', 'Memuaskan', 'demo-user8.jpg', '2026-10-09 16:56:00', NULL),
-  ('202600009', 'Eka Wulandari', 65.50, 'C', 'Cukup Memuaskan', 'demo-user1.jpg', '2026-10-10 08:03:00', '2026-10-11 10:39:00'),
-  ('202600010', 'Farhan Akbar', 62.25, 'C', 'Cukup Memuaskan', 'demo-user2.jpg', '2026-10-11 09:10:00', '2026-10-12 11:50:00'),
-  ('202600011', 'Fajar Nugroho', 58.00, 'C', 'Cukup Memuaskan', 'demo-user3.jpg', '2026-10-12 10:17:00', '2026-10-13 12:01:00'),
-  ('202600012', 'Fitri Handayani', 54.50, 'C', 'Cukup Memuaskan', 'demo-user4.jpg', '2026-10-13 11:24:00', NULL),
-  ('202600013', 'Gilang Ramadhan', 50.50, 'D', 'Kurang Memuaskan', 'demo-user5.jpg', '2026-10-14 12:31:00', '2026-10-15 14:23:00'),
-  ('202600014', 'Intan Permata', 48.00, 'D', 'Kurang Memuaskan', 'demo-user6.jpg', '2026-10-15 13:38:00', '2026-10-16 15:34:00'),
-  ('202600015', 'Ilham Saputra', 43.75, 'D', 'Kurang Memuaskan', 'demo-user7.jpg', '2026-10-16 14:45:00', '2026-10-17 16:45:00'),
-  ('202600016', 'Kevin Alexander', 36.00, 'D', 'Kurang Memuaskan', 'demo-user8.jpg', '2026-10-17 15:52:00', NULL),
-  ('202600017', 'Laila Zahra', 34.50, 'E', 'Tidak Lulus', 'demo-user1.jpg', '2026-10-18 16:59:00', '2026-10-19 10:07:00'),
-  ('202600018', 'Maya Sari', 32.00, 'E', 'Tidak Lulus', 'demo-user2.jpg', '2026-10-19 08:06:00', '2026-10-20 11:18:00'),
-  ('202600019', 'Muhammad Rizky', 25.50, 'E', 'Tidak Lulus', 'demo-user3.jpg', '2026-10-20 09:13:00', '2026-10-21 12:29:00'),
-  ('202600020', 'Nabila Azzahra', 14.50, 'E', 'Tidak Lulus', 'demo-user4.jpg', '2026-10-21 10:20:00', NULL),
-  ('202600021', 'Putri Amelia', 5.00, 'E', 'Tidak Lulus', 'demo-user5.jpg', '2026-10-22 11:27:00', '2026-10-23 14:51:00'),
-  ('202600022', 'Rafi Kurniawan', 99.00, 'A', 'Sangat Memuaskan', 'demo-user6.jpg', '2026-10-23 12:34:00', '2026-10-24 15:02:00'),
-  ('202600023', 'Rina Oktaviani', 85.00, 'A', 'Sangat Memuaskan', 'demo-user7.jpg', '2026-10-24 13:41:00', '2026-10-25 16:13:00'),
-  ('202600024', 'Siti Nurhaliza', 81.25, 'A', 'Sangat Memuaskan', 'demo-user8.jpg', '2026-10-01 14:48:00', NULL),
-  ('202600025', 'Taufik Hidayat', 68.50, 'B', 'Memuaskan', 'demo-user1.jpg', '2026-10-02 15:55:00', '2026-10-03 10:35:00'),
-  ('202600026', 'Upa Pratama', 60.00, 'C', 'Cukup Memuaskan', 'demo-user2.jpg', '2026-10-03 16:02:00', '2026-10-04 11:46:00'),
-  ('202600027', 'Vina Anggraini', 49.50, 'D', 'Kurang Memuaskan', 'demo-user3.jpg', '2026-10-04 08:09:00', '2026-10-05 12:57:00'),
-  ('202600028', 'Wahyu Firmansyah', 38.50, 'D', 'Kurang Memuaskan', 'demo-user4.jpg', '2026-10-05 09:16:00', NULL),
-  ('202600029', 'Yusuf Maulana', 20.00, 'E', 'Tidak Lulus', 'demo-user5.jpg', '2026-10-06 10:23:00', '2026-10-07 14:19:00'),
-  ('202600030', 'Zahra Nurfadilah', 64.25, 'C', 'Cukup Memuaskan', 'demo-user6.jpg', '2026-10-07 11:30:00', '2026-10-08 15:30:00');
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8mb4 */;
+
+--
+-- Database: `db5a`
+--
+
+-- --------------------------------------------------------
+
+--
+-- Struktur dari tabel `nilaimhsw`
+--
+
+CREATE TABLE `nilaimhsw` (
+  `nim` varchar(10) NOT NULL,
+  `namamhsw` varchar(30) NOT NULL,
+  `nilaiakhir` float NOT NULL,
+  `nilaihuruf` varchar(5) DEFAULT NULL,
+  `predikat` varchar(20) DEFAULT NULL,
+  `foto` varchar(255) DEFAULT NULL,
+  `created_date` timestamp NOT NULL DEFAULT current_timestamp() COMMENT 'Menyimpan waktu saat data pertama kali dibuat.',
+  `modified_date` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp() COMMENT 'Otomatis memperbarui waktu tiap kali data diubah.'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data untuk tabel `nilaimhsw`
+--
+
+INSERT INTO `nilaimhsw` (`nim`, `namamhsw`, `nilaiakhir`, `nilaihuruf`, `predikat`, `foto`, `created_date`, `modified_date`) VALUES
+('0987654321', 'Gusty Faqikh', 99.99, 'A', 'Sangat Memuaskan', NULL, '2026-10-12 03:43:53', '2026-10-12 03:43:53'),
+('1010101010', 'Jarwo', 55, 'B', 'Memuaskan', NULL, '2026-10-12 05:33:54', '2026-10-12 05:33:54'),
+('1234567890', 'Randa Wijaya', 100, 'A', 'Sangat Memuaskan', NULL, '2026-10-09 03:24:43', '2026-10-09 03:24:43'),
+('2020202020', 'Habil', 99, 'A', 'Sangat Memuaskan', NULL, '2026-10-12 05:31:49', '2026-10-12 05:31:49'),
+('3030303030', 'Sopo', 30, 'D', 'Kurang', NULL, '2026-10-12 05:35:30', '2026-10-12 05:35:30'),
+('3202216543', 'Jolo', 22, 'D', 'Kurang', NULL, '2026-10-12 07:12:26', '2026-10-12 07:12:26'),
+('3202416035', 'Muhammad Nabil Fauzal Abrar', 9, 'E', 'Tidak Lulus', NULL, '2026-10-12 06:24:04', '2026-10-12 06:24:04'),
+('5050505050', 'Bang Upa', 98, 'A', 'Sangat Memuaskan', NULL, '2026-10-09 03:33:28', '2026-10-09 03:33:28'),
+('5555555555', 'akbar', 45, 'C', 'Cukup', NULL, '2026-10-12 05:44:50', '2026-10-12 05:44:50'),
+('7171717171', 'Character', 99.99, 'A', 'Sangat Memuaskan', 'f3ac4b58f7dbddbaafdb4d4e5660f1f4.jpg', '2026-10-25 16:13:55', '2026-10-25 16:13:55'),
+('8080808080', 'Patrizio', 90, 'A', 'Sangat Memuaskan', NULL, '2026-10-16 02:18:30', '2026-10-16 02:19:48'),
+('9090909090', 'Wang Lin', 100, 'A', 'Sangat Memuaskan', NULL, '2026-10-12 05:38:57', '2026-10-12 05:38:57');
+
+--
+-- Indexes for dumped tables
+--
+
+--
+-- Indeks untuk tabel `nilaimhsw`
+--
+ALTER TABLE `nilaimhsw`
+  ADD PRIMARY KEY (`nim`);
+COMMIT;
+
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
