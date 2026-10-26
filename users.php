@@ -2,6 +2,8 @@
 session_start();
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
+require_once __DIR__ . "/_nilai_helpers.php";
+$csrfToken = nilaiCsrfToken();
 require_once __DIR__ . "/connect.php";
 
 if (!function_exists("h")) {
@@ -33,7 +35,7 @@ if (!function_exists("nilaiFotoDisplayUrl")) {
 
 $flash = $_SESSION["nilai_flash"] ?? null;
 $formErrors = $_SESSION["nilai_form_errors"] ?? [];
-$formValues = $_SESSION["nilai_form_values"] ?? ["nim" => "", "namamhsw" => "", "nilaiakhir" => "", "nim_lama" => ""];
+$formValues = $_SESSION["nilai_form_values"] ?? ["nim" => "", "namamhsw" => "", "nilaiakhir" => "", "nim_lama" => "", "foto_lama" => ""];
 $openModal = $_SESSION["nilai_open_modal"] ?? "";
 unset($_SESSION["nilai_flash"], $_SESSION["nilai_form_errors"], $_SESSION["nilai_form_values"], $_SESSION["nilai_open_modal"]);
 
@@ -1338,6 +1340,8 @@ mysqli_close($conn);
                                       data-nim="<?= h($rowNim) ?>"
                                       data-namamhsw="<?= h($rowNama) ?>"
                                       data-nilaiakhir="<?= h($rowNilai) ?>"
+                                      data-foto="<?= h($rowFoto ?? "") ?>"
+                                      data-foto-url="<?= h($rowFotoUrl ?? "./assets/img/default-150x150.png") ?>"
                                       aria-label="Edit nilai NIM <?= h($rowNim) ?>"
                                       title="Edit nilai">
                                       <i class="bi bi-pencil" aria-hidden="true"></i>
@@ -1401,13 +1405,14 @@ mysqli_close($conn);
             <div class="modal fade" id="modal-add-user" tabindex="-1" aria-labelledby="modal-add-user-label" aria-hidden="true">
               <div class="modal-dialog">
                 <div class="modal-content">
-                  <form action="./insert_nilai.php" method="post" accept-charset="UTF-8">
+                  <form action="./insert_nilai.php" method="post" enctype="multipart/form-data" accept-charset="UTF-8">
+                    <input type="hidden" name="csrf_token" value="<?= h($csrfToken) ?>" />
                     <div class="modal-header">
                       <h5 class="modal-title" id="modal-add-user-label">Tambah Data Nilai</h5>
                       <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
                     </div>
                     <div class="modal-body">
-                      <?php if (!empty($formErrors)): ?>
+                      <?php if ($openModal === "add" && !empty($formErrors)): ?>
                         <div class="alert alert-danger py-2" role="alert">
                           <?php foreach ($formErrors as $message): ?>
                             <div><?= h($message) ?></div>
@@ -1432,6 +1437,17 @@ mysqli_close($conn);
                                min="0" max="100" step="0.01" value="<?= h($formValues["nilaiakhir"] ?? "") ?>"
                                placeholder="0–100" required />
                       </div>
+                      <div class="mb-3">
+                        <label for="new-nilai-foto" class="form-label">Foto Mahasiswa</label>
+                        <div class="d-flex align-items-center gap-3">
+                          <img id="new-nilai-foto-preview" src="./assets/img/default-150x150.png" alt="Pratinjau foto mahasiswa" class="rounded-circle border" width="64" height="64" style="object-fit: cover; flex-shrink: 0;" />
+                          <input type="file" class="form-control" id="new-nilai-foto" name="foto" accept="image/jpeg,image/png,image/webp" />
+                        </div>
+                        <?php if ($openModal === "add" && isset($formErrors["foto"])): ?>
+                          <div class="text-danger small mt-1"><?= h($formErrors["foto"]) ?></div>
+                        <?php endif; ?>
+                        <div class="form-text">Opsional. Format JPG, PNG, WEBP; maksimal 2 MiB.</div>
+                      </div>
                       <div class="form-text">Nilai huruf dan predikat dihitung otomatis saat data disimpan.</div>
                     </div>
                     <div class="modal-footer">
@@ -1448,13 +1464,20 @@ mysqli_close($conn);
             <div class="modal fade" id="modal-edit-user" tabindex="-1" aria-labelledby="modal-edit-user-label" aria-hidden="true">
               <div class="modal-dialog">
                 <div class="modal-content">
-                  <form action="./edit_nilai.php" method="post" accept-charset="UTF-8">
+                  <form action="./edit_nilai.php" method="post" enctype="multipart/form-data" accept-charset="UTF-8">
+                    <input type="hidden" name="csrf_token" value="<?= h($csrfToken) ?>" />
                     <input type="hidden" name="nim_lama" id="edit-nilai-nim-lama" value="<?= h($formValues["nim_lama"] ?? "") ?>" />
+                    <input type="hidden" name="foto_lama" id="edit-nilai-foto-lama" value="<?= h($formValues["foto_lama"] ?? "") ?>" />
                     <div class="modal-header">
                       <h5 class="modal-title" id="modal-edit-user-label">Perbarui Data Nilai</h5>
                       <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
                     </div>
                     <div class="modal-body">
+                      <?php if ($openModal === "edit" && !empty($formErrors)): ?>
+                        <div class="alert alert-danger py-2" role="alert">
+                          <?php foreach ($formErrors as $message): ?><div><?= h($message) ?></div><?php endforeach; ?>
+                        </div>
+                      <?php endif; ?>
                       <div class="mb-3">
                         <label for="edit-nilai-nim" class="form-label">NIM <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="edit-nilai-nim" name="nim"
@@ -1471,6 +1494,17 @@ mysqli_close($conn);
                         <input type="number" class="form-control" id="edit-nilai-akhir" name="nilaiakhir"
                                min="0" max="100" step="0.01"
                                value="<?= h($formValues["nilaiakhir"] ?? "") ?>" required />
+                      </div>
+                      <div class="mb-3">
+                        <label for="edit-nilai-foto" class="form-label">Foto Mahasiswa</label>
+                        <div class="d-flex align-items-center gap-3">
+                          <img id="edit-nilai-foto-preview" src="<?= h(nilaiFotoDisplayUrl((string)($formValues["foto_lama"] ?? ""))) ?>" alt="Pratinjau foto mahasiswa" class="rounded-circle border" width="64" height="64" style="object-fit: cover; flex-shrink: 0;" />
+                          <input type="file" class="form-control" id="edit-nilai-foto" name="foto" accept="image/jpeg,image/png,image/webp" />
+                        </div>
+                        <?php if ($openModal === "edit" && isset($formErrors["foto"])): ?>
+                          <div class="text-danger small mt-1"><?= h($formErrors["foto"]) ?></div>
+                        <?php endif; ?>
+                        <div class="form-text">Opsional. Pilih foto baru jika ingin mengganti foto yang ada. Maksimal 2 MiB.</div>
                       </div>
                       <div class="form-text">Nilai huruf dan predikat akan dihitung ulang berdasarkan nilai akhir terbaru.</div>
                     </div>
@@ -1489,6 +1523,7 @@ mysqli_close($conn);
               <div class="modal-dialog">
                 <div class="modal-content">
                   <form action="./delete_nilai.php" method="post">
+                    <input type="hidden" name="csrf_token" value="<?= h($csrfToken) ?>" />
                     <div class="modal-header">
                       <h5 class="modal-title" id="modal-delete-user-label">Hapus Data Nilai</h5>
                       <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
@@ -1724,6 +1759,11 @@ mysqli_close($conn);
             document.getElementById('edit-nilai-nim').value = trigger.dataset.nim || '';
             document.getElementById('edit-nilai-nama').value = trigger.dataset.namamhsw || '';
             document.getElementById('edit-nilai-akhir').value = trigger.dataset.nilaiakhir || '';
+            document.getElementById('edit-nilai-foto-lama').value = trigger.dataset.foto || '';
+            const editFotoInput = document.getElementById('edit-nilai-foto');
+            if (editFotoInput) editFotoInput.value = '';
+            const editFotoPreview = document.getElementById('edit-nilai-foto-preview');
+            if (editFotoPreview) editFotoPreview.src = trigger.dataset.fotoUrl || './assets/img/default-150x150.png';
           });
         }
 
@@ -1736,6 +1776,49 @@ mysqli_close($conn);
           });
         }
 
+        function bindPhotoPreview(inputId, previewId, fallbackSource) {
+          const input = document.getElementById(inputId);
+          const preview = document.getElementById(previewId);
+          if (!input || !preview) return;
+          input.addEventListener('change', function () {
+            if (preview.dataset.objectUrl) {
+              URL.revokeObjectURL(preview.dataset.objectUrl);
+              delete preview.dataset.objectUrl;
+            }
+            const file = input.files && input.files[0];
+            if (!file) { preview.src = fallbackSource(); return; }
+            if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 2 * 1024 * 1024) {
+              input.value = '';
+              preview.src = fallbackSource();
+              window.alert('Pilih foto JPG, PNG, atau WEBP dengan ukuran maksimal 2 MiB.');
+              return;
+            }
+            const url = URL.createObjectURL(file);
+            preview.dataset.objectUrl = url;
+            preview.src = url;
+          });
+        }
+        bindPhotoPreview('new-nilai-foto', 'new-nilai-foto-preview', function () {
+          return './assets/img/default-150x150.png';
+        });
+        bindPhotoPreview('edit-nilai-foto', 'edit-nilai-foto-preview', function () {
+          const oldFoto = document.getElementById('edit-nilai-foto-lama')?.value || '';
+          const demoMap = {
+            'demo-user1.jpg': './assets/img/user1-128x128.jpg',
+            'demo-user2.jpg': './assets/img/user2-160x160.jpg',
+            'demo-user3.jpg': './assets/img/user3-128x128.jpg',
+            'demo-user4.jpg': './assets/img/user4-128x128.jpg',
+            'demo-user5.jpg': './assets/img/user5-128x128.jpg',
+            'demo-user6.jpg': './assets/img/user6-128x128.jpg',
+            'demo-user7.jpg': './assets/img/user7-128x128.jpg',
+            'demo-user8.jpg': './assets/img/user8-128x128.jpg'
+          };
+          if (demoMap[oldFoto]) return demoMap[oldFoto];
+          return /^[a-f0-9]{32}\\.(jpg|png|webp)$/.test(oldFoto)
+            ? './uploads/foto-mahasiswa/' + encodeURIComponent(oldFoto)
+            : './assets/img/default-150x150.png';
+        });
+
         // Jika validasi gagal, buka kembali modal dan pulihkan semua value yang dikirim.
         const modalToOpen = <?= json_encode($openModal, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
         if (modalToOpen === 'add' || modalToOpen === 'edit') {
@@ -1745,6 +1828,8 @@ mysqli_close($conn);
             document.getElementById('edit-nilai-nim').value = <?= json_encode((string)($formValues['nim'] ?? ''), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
             document.getElementById('edit-nilai-nama').value = <?= json_encode((string)($formValues['namamhsw'] ?? ''), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
             document.getElementById('edit-nilai-akhir').value = <?= json_encode((string)($formValues['nilaiakhir'] ?? ''), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
+            document.getElementById('edit-nilai-foto-lama').value = <?= json_encode((string)($formValues['foto_lama'] ?? ''), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
+            document.getElementById('edit-nilai-foto-preview').src = <?= json_encode(nilaiFotoDisplayUrl((string)($formValues['foto_lama'] ?? '')), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
           }
           const modal = document.getElementById(modalId);
           if (modal && window.bootstrap) bootstrap.Modal.getOrCreateInstance(modal).show();
