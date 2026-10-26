@@ -10,6 +10,27 @@ if (!function_exists("h")) {
     }
 }
 
+if (!function_exists("nilaiFotoDisplayUrl")) {
+    function nilaiFotoDisplayUrl($filename) {
+        $demo = [
+            "demo-user1.jpg" => "./assets/img/user1-128x128.jpg",
+            "demo-user2.jpg" => "./assets/img/user2-160x160.jpg",
+            "demo-user3.jpg" => "./assets/img/user3-128x128.jpg",
+            "demo-user4.jpg" => "./assets/img/user4-128x128.jpg",
+            "demo-user5.jpg" => "./assets/img/user5-128x128.jpg",
+            "demo-user6.jpg" => "./assets/img/user6-128x128.jpg",
+            "demo-user7.jpg" => "./assets/img/user7-128x128.jpg",
+            "demo-user8.jpg" => "./assets/img/user8-128x128.jpg",
+        ];
+        $filename = is_string($filename) ? $filename : "";
+        if (isset($demo[$filename])) return $demo[$filename];
+        if (preg_match('/^[a-f0-9]{32}\\.(?:jpg|png|webp)$/D', $filename)) {
+            return "./uploads/foto-mahasiswa/" . rawurlencode($filename);
+        }
+        return "./assets/img/default-150x150.png";
+    }
+}
+
 $flash = $_SESSION["nilai_flash"] ?? null;
 $formErrors = $_SESSION["nilai_form_errors"] ?? [];
 $formValues = $_SESSION["nilai_form_values"] ?? ["nim" => "", "namamhsw" => "", "nilaiakhir" => "", "nim_lama" => ""];
@@ -19,7 +40,7 @@ unset($_SESSION["nilai_flash"], $_SESSION["nilai_form_errors"], $_SESSION["nilai
 $nilaiRows = [];
 $loadError = "";
 try {
-    $result = mysqli_query($conn, "SELECT * FROM nilaimhsw ORDER BY nim ASC");
+    $result = mysqli_query($conn, "SELECT * FROM nilaimhsw ORDER BY nilaiakhir DESC, namamhsw ASC, nim ASC");
     while ($record = mysqli_fetch_assoc($result)) {
         $nilaiRows[] = $record;
     }
@@ -1213,8 +1234,8 @@ mysqli_close($conn);
                               type="search"
                               id="nilai-search"
                               class="form-control"
-                              placeholder="Cari berdasarkan NIM atau nama"
-                              aria-label="Cari berdasarkan NIM atau nama"
+                              placeholder="Cari nama mahasiswa"
+                              aria-label="Cari nama mahasiswa"
                               style="width: 180px"
                             />
                           </div>
@@ -1226,8 +1247,8 @@ mysqli_close($conn);
                             <option value="all" selected>Semua Predikat</option>
                             <option value="sangat memuaskan">Sangat Memuaskan</option>
                             <option value="memuaskan">Memuaskan</option>
-                            <option value="cukup">Cukup</option>
-                            <option value="kurang">Kurang</option>
+                            <option value="cukup memuaskan">Cukup Memuaskan</option>
+                            <option value="kurang memuaskan">Kurang Memuaskan</option>
                             <option value="tidak lulus">Tidak Lulus</option>
                           </select>
                           <button
@@ -1252,10 +1273,15 @@ mysqli_close($conn);
                           <tr>
                             <th>NIM</th>
                             <th>Nama Lengkap</th>
-                            <th>Nilai Akhir</th>
+                            <th scope="col" id="nilai-sort-header" aria-sort="descending">
+                              <button type="button" id="nilai-sort-button" class="btn btn-link p-0 text-body text-decoration-none fw-semibold" aria-label="Urutkan nilai akhir, saat ini terbesar ke terkecil" title="Klik untuk mengubah urutan nilai">
+                                Nilai Akhir <i id="nilai-sort-icon" class="bi bi-arrow-down-short ms-1" aria-hidden="true"></i>
+                              </button>
+                            </th>
                             <th>Nilai Huruf</th>
                             <th>Predikat</th>
                             <th>Tgl Dibuat</th>
+                            <th>Tgl Diubah</th>
                             <th class="text-end">Aksi</th>
                           </tr>
                         </thead>
@@ -1269,6 +1295,11 @@ mysqli_close($conn);
                                 $rowHuruf = strtoupper(trim((string) ($row["nilaihuruf"] ?? "")));
                                 $rowPredikat = (string) ($row["predikat"] ?? "");
                                 $rowTanggal = (string) ($row["created_date"] ?? $row["created_at"] ?? "-");
+                                $rowTanggalDiubah = trim((string) ($row["modified_date"] ?? "")) !== ""
+                                    ? (string) $row["modified_date"]
+                                    : "Belum diubah";
+                                $rowFoto = (string) ($row["foto"] ?? "");
+                                $rowFotoUrl = nilaiFotoDisplayUrl($rowFoto);
                                 $badgeClass = [
                                     "A" => "text-bg-success",
                                     "B" => "text-bg-primary",
@@ -1276,18 +1307,19 @@ mysqli_close($conn);
                                     "D" => "text-bg-warning",
                                     "E" => "text-bg-danger"
                                 ][$rowHuruf] ?? "text-bg-secondary";
-                                $initial = preg_match('/^./us', $rowNama, $initialMatch) ? $initialMatch[0] : "M";
                               ?>
                               <tr class="nilai-row"
-                                  data-search="<?= h($rowNim . ' ' . $rowNama) ?>"
+                                  data-search="<?= h($rowNama) ?>"
+                                  data-nilai="<?= h(number_format((float) $rowNilai, 2, ".", "")) ?>"
                                   data-grade="<?= h($rowHuruf) ?>"
-                                  data-predikat="<?= h(strtolower($rowPredikat)) ?>">
+                                  data-predikat="<?= h(mb_strtolower($rowPredikat, "UTF-8")) ?>">
                                 <td><span class="font-monospace fw-semibold"><?= h($rowNim) ?></span></td>
                                 <td>
                                   <div class="d-flex align-items-center">
-                                    <div class="d-flex align-items-center justify-content-center rounded-circle bg-primary-subtle text-primary fw-semibold me-2" style="width: 32px; height: 32px; flex-shrink: 0;">
-                                      <?= h(strtoupper($initial)) ?>
-                                    </div>
+                                    <img src="<?= h($rowFotoUrl) ?>" alt="Foto <?= h($rowNama) ?>"
+                                         class="rounded-circle me-2" width="36" height="36" loading="lazy"
+                                         style="object-fit: cover; flex-shrink: 0;"
+                                         onerror="this.onerror=null;this.src='./assets/img/default-150x150.png';" />
                                     <span class="fw-medium"><?= h($rowNama) ?></span>
                                   </div>
                                 </td>
@@ -1295,6 +1327,7 @@ mysqli_close($conn);
                                 <td><span class="badge <?= h($badgeClass) ?>"><?= h($rowHuruf) ?></span></td>
                                 <td><?= h($rowPredikat) ?></td>
                                 <td><?= h($rowTanggal !== "" ? $rowTanggal : "-") ?></td>
+                                <td><?= h($rowTanggalDiubah) ?></td>
                                 <td class="text-end">
                                   <div class="btn-group btn-group-sm">
                                     <button
@@ -1325,7 +1358,7 @@ mysqli_close($conn);
                             <?php endforeach; ?>
                           <?php else: ?>
                             <tr id="nilai-empty-state">
-                              <td colspan="7" class="text-center text-body-secondary py-4">
+                              <td colspan="8" class="text-center text-body-secondary py-4">
                                 Belum ada data nilai mahasiswa. Klik <strong>Tambah Data Nilai</strong> untuk mulai.
                               </td>
                             </tr>
@@ -1340,11 +1373,21 @@ mysqli_close($conn);
                   </div>
                   <!--end::Card Body-->
                   <!--begin::Card Footer-->
-                  <div class="card-footer clearfix">
-                    <div class="float-start pt-1 fs-7 text-body-secondary" id="nilai-summary">
+                  <div class="card-footer d-flex flex-wrap align-items-center justify-content-between gap-3">
+                    <div class="pt-1 fs-7 text-body-secondary" id="nilai-summary">
                       Total <?= count($nilaiRows) ?> data nilai
                     </div>
-                    <ul class="pagination pagination-sm m-0 float-end" id="nilai-pagination" aria-label="Navigasi halaman data nilai"></ul>
+                    <div class="d-flex flex-wrap align-items-center gap-2">
+                      <label class="form-label mb-0 small" for="nilai-page-size">Data per halaman</label>
+                      <select id="nilai-page-size" class="form-select form-select-sm w-auto" aria-label="Jumlah data per halaman">
+                        <option value="5">5</option>
+                        <option value="10" selected>10</option>
+                        <option value="15">15</option>
+                      </select>
+                      <nav aria-label="Navigasi halaman data nilai">
+                        <ul class="pagination pagination-sm m-0" id="nilai-pagination"></ul>
+                      </nav>
+                    </div>
                   </div>
                   <!--end::Card Footer-->
                 </div>
@@ -1548,14 +1591,18 @@ mysqli_close($conn);
       document.addEventListener('DOMContentLoaded', function () {
         const searchInput = document.getElementById('nilai-search');
         const predikatFilter = document.getElementById('nilai-predikat-filter');
+        const pageSizeSelect = document.getElementById('nilai-page-size');
+        const sortButton = document.getElementById('nilai-sort-button');
+        const sortHeader = document.getElementById('nilai-sort-header');
+        const sortIcon = document.getElementById('nilai-sort-icon');
         const tableBody = document.getElementById('nilai-table-body');
         const summary = document.getElementById('nilai-summary');
         const pagination = document.getElementById('nilai-pagination');
         const emptyState = document.getElementById('nilai-empty-state');
         const noMatch = document.getElementById('nilai-no-match');
         const rows = Array.from(document.querySelectorAll('tr.nilai-row'));
-        const pageSize = 10;
         let currentPage = 1;
+        let sortOrder = 'desc';
 
         function makePageItem(label, page, disabled, active, ariaLabel) {
           const li = document.createElement('li');
@@ -1565,6 +1612,7 @@ mysqli_close($conn);
           button.className = 'page-link';
           button.textContent = label;
           if (ariaLabel) button.setAttribute('aria-label', ariaLabel);
+          if (active) button.setAttribute('aria-current', 'page');
           if (disabled) button.disabled = true;
           button.addEventListener('click', function () {
             currentPage = page;
@@ -1574,44 +1622,96 @@ mysqli_close($conn);
           pagination.appendChild(li);
         }
 
+        function updateSortIndicator() {
+          if (sortIcon) {
+            sortIcon.className = sortOrder === 'desc'
+              ? 'bi bi-arrow-down-short ms-1'
+              : 'bi bi-arrow-up-short ms-1';
+          }
+          if (sortHeader) sortHeader.setAttribute('aria-sort', sortOrder === 'desc' ? 'descending' : 'ascending');
+          if (sortButton) {
+            sortButton.setAttribute('aria-label', sortOrder === 'desc'
+              ? 'Urutkan nilai akhir, saat ini terbesar ke terkecil'
+              : 'Urutkan nilai akhir, saat ini terkecil ke terbesar');
+          }
+        }
+
+        function normalizedPredicate(value) {
+          const predicate = (value || '').trim().toLocaleLowerCase('id');
+          if (predicate === 'cukup') return 'cukup memuaskan';
+          if (predicate === 'kurang') return 'kurang memuaskan';
+          return predicate;
+        }
+
         function renderRows() {
           const query = (searchInput ? searchInput.value : '').trim().toLocaleLowerCase('id');
           const filter = predikatFilter ? predikatFilter.value : 'all';
-          const filtered = rows.filter(function (row) {
-            const text = (row.dataset.search || '').toLocaleLowerCase('id');
-            const predikat = (row.dataset.predikat || '').toLocaleLowerCase('id');
-            return text.includes(query) && (filter === 'all' || predikat === filter);
+          const pageSizeRaw = pageSizeSelect ? Number.parseInt(pageSizeSelect.value, 10) : 10;
+          const pageSize = [5, 10, 15].includes(pageSizeRaw) ? pageSizeRaw : 10;
+
+          const orderedRows = rows.slice().sort(function (a, b) {
+            const scoreA = Number.parseFloat(a.dataset.nilai || '0');
+            const scoreB = Number.parseFloat(b.dataset.nilai || '0');
+            if (scoreA !== scoreB) return sortOrder === 'asc' ? scoreA - scoreB : scoreB - scoreA;
+            const nameA = (a.dataset.search || '').toLocaleLowerCase('id');
+            const nameB = (b.dataset.search || '').toLocaleLowerCase('id');
+            return nameA.localeCompare(nameB, 'id');
           });
+
+          orderedRows.forEach(row => tableBody.insertBefore(row, noMatch || null));
+          if (emptyState) tableBody.appendChild(emptyState);
+          if (noMatch) tableBody.appendChild(noMatch);
+
+          const filtered = orderedRows.filter(function (row) {
+            const nama = (row.dataset.search || '').toLocaleLowerCase('id');
+            const predikat = normalizedPredicate(row.dataset.predikat || '');
+            return nama.includes(query) && (filter === 'all' || predikat === filter);
+          });
+
           const pages = Math.max(1, Math.ceil(filtered.length / pageSize));
           if (currentPage > pages) currentPage = pages;
+          if (currentPage < 1) currentPage = 1;
+
           rows.forEach(row => row.classList.add('d-none'));
           filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize)
             .forEach(row => row.classList.remove('d-none'));
 
           if (emptyState) emptyState.classList.toggle('d-none', rows.length > 0);
           if (noMatch) noMatch.classList.toggle('d-none', !(rows.length > 0 && filtered.length === 0));
+
           if (summary) {
             if (filtered.length === 0) {
-              summary.textContent = rows.length === 0 ? 'Belum ada data nilai' : 'Tidak ada data yang cocok';
+              summary.textContent = rows.length === 0
+                ? 'Belum ada data nilai'
+                : 'Tidak ada data yang cocok dengan pencarian/filter';
             } else {
-              const start = (currentPage - 1) * pageSize + 1;
-              const end = Math.min(currentPage * pageSize, filtered.length);
-              summary.textContent = 'Menampilkan ' + start + '–' + end + ' dari ' + filtered.length + ' data';
+              const first = (currentPage - 1) * pageSize + 1;
+              const last = Math.min(currentPage * pageSize, filtered.length);
+              summary.textContent = 'Menampilkan ' + first + '–' + last + ' dari ' + filtered.length + ' data';
             }
           }
 
           pagination.innerHTML = '';
-          if (pages > 1) {
-            makePageItem('«', Math.max(1, currentPage - 1), currentPage === 1, false, 'Halaman sebelumnya');
-            for (let page = 1; page <= pages; page++) {
-              makePageItem(String(page), page, false, page === currentPage, 'Halaman ' + page);
-            }
-            makePageItem('»', Math.min(pages, currentPage + 1), currentPage === pages, false, 'Halaman berikutnya');
+          const firstDisabled = currentPage === 1 || filtered.length === 0;
+          const lastDisabled = currentPage === pages || filtered.length === 0;
+          makePageItem('« Pertama', 1, firstDisabled, false, 'Halaman pertama');
+          makePageItem('‹ Sebelumnya', Math.max(1, currentPage - 1), firstDisabled, false, 'Halaman sebelumnya');
+          for (let page = 1; page <= pages; page++) {
+            makePageItem(String(page), page, false, page === currentPage, 'Halaman ' + page);
           }
+          makePageItem('Berikutnya ›', Math.min(pages, currentPage + 1), lastDisabled, false, 'Halaman berikutnya');
+          makePageItem('Terakhir »', pages, lastDisabled, false, 'Halaman terakhir');
+          updateSortIndicator();
         }
 
         if (searchInput) searchInput.addEventListener('input', function () { currentPage = 1; renderRows(); });
         if (predikatFilter) predikatFilter.addEventListener('change', function () { currentPage = 1; renderRows(); });
+        if (pageSizeSelect) pageSizeSelect.addEventListener('change', function () { currentPage = 1; renderRows(); });
+        if (sortButton) sortButton.addEventListener('click', function () {
+          sortOrder = sortOrder === 'desc' ? 'asc' : 'desc';
+          currentPage = 1;
+          renderRows();
+        });
         renderRows();
 
         // Isi nilai-nilai yang akan diedit dari atribut data pada tombol di baris tabel.
