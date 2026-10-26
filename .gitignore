@@ -1,0 +1,8 @@
+# Uploaded student photos are private; demo photos are mapped to template assets.
+/uploads/foto-mahasiswa/*
+!/uploads/foto-mahasiswa/.htaccess
+!/uploads/foto-mahasiswa/index.php
+
+.DS_Store
+Thumbs.db
+*.log
